@@ -6,6 +6,7 @@ class Game extends React.Component {
         this.setOptions = this.setOptions.bind(this);
         this.selectHandler = this.selectHandler.bind(this);
         this.createButtons = this.createButtons.bind(this);
+        this.afterClearButtons = this.afterClearButtons.bind(this);
     }
 
     colors() {
@@ -24,15 +25,19 @@ class Game extends React.Component {
         let removed = names.splice(randomIndex(), 1)[0];
         let wcolor = options[removed];
         let selected = names[randomIndex()];
-        delete options[removed]
         options[selected] = wcolor;
-        this.setState({"options": options});
-        Object.keys(options).forEach(this.createButtons);
+        delete options[removed];
+        // Thanks @agmcleod from StackOverflow! https://stackoverflow.com/a/37658191/2960335
+        let newState = [];
+        this.setState({"options": options}, Object.keys(options).forEach((o) => {
+          newState = this.createButtons(o, newState, options);
+        }));
+        this.setState({buttons: newState});
     }
 
     setOptions() {
 
-        this.setState({"buttons": []}, this.afterClearButtons);
+        this.setState({buttons: [], result: ""}, this.afterClearButtons);
     }
 
     selectHandler(name, color) {
@@ -43,12 +48,14 @@ class Game extends React.Component {
         }
     }
 
-    createButtons(c) {
+    createButtons(c, state, opts) {
         // onClick parametre olarak c vardı, parametre c olduğu için onu ezer. Ben event olarak değiştirdim.
-        let btn = ( <p style={{color: this.state.options[c]}} onClick={(event) => {
-            this.selectHandler(c, this.state.options[c])
+        // The parameter for onClick was c, so I changed it to event to clear the conflict. -Rahman Usta
+        let btn = ( <p style={{color: opts[c]}} onClick={(event) => {
+            this.selectHandler(c, opts[c])
         }}>{c}</p> );
-        this.setState({"buttons": this.state.buttons.concat([btn])});
+        state.push(btn);
+        return state;
     }
 
     render() {
